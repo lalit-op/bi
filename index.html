@@ -1245,9 +1245,20 @@
             cursor: pointer; white-space: nowrap;
         }
         .home-install-btn.show { display: block; }
+        .dns-shortcut-btn { flex:0 0 auto; min-height:44px; padding:0 12px; border:1px solid rgba(56,189,248,.35); border-radius:13px; background:rgba(14,165,233,.12); color:#bae6fd; font-size:12px; font-weight:800; cursor:pointer; white-space:nowrap; }
+        .dns-help-backdrop { position:fixed; inset:0; z-index:1000000; display:none; align-items:center; justify-content:center; padding:18px; background:rgba(0,0,0,.76); backdrop-filter:blur(8px); }
+        .dns-help-backdrop.open { display:flex; }
+        .dns-help-dialog { width:min(100%,460px); max-height:86dvh; overflow-y:auto; border:1px solid rgba(148,163,184,.2); border-radius:22px; background:#0f172a; color:#f8fafc; padding:22px; box-shadow:0 24px 80px rgba(0,0,0,.5); }
+        .dns-help-title { margin:0; font-size:20px; font-weight:800; }
+        .dns-help-close { border:0; border-radius:50%; width:40px; height:40px; background:rgba(255,255,255,.09); color:white; font-size:24px; cursor:pointer; }
+        .dns-help-copy { color:#cbd5e1; line-height:1.6; font-size:14px; }
+        .dns-open-btn { display:block; width:100%; min-height:50px; margin:14px 0; padding:12px; border:0; border-radius:13px; background:linear-gradient(90deg,#0284c7,#4f46e5); color:white; font-size:14px; font-weight:800; cursor:pointer; }
+        .dns-help-path { padding:14px; margin-top:12px; border-radius:14px; border:1px solid rgba(148,163,184,.15); background:rgba(255,255,255,.03); color:#dbeafe; font-size:13px; line-height:1.65; }
+        .dns-help-note { color:#fbbf24; font-size:12px; line-height:1.55; margin-top:14px; }
         @media (max-width: 479px) {
-            .home-search-wrap { padding-left: 6px; padding-right: 6px; }
-            .home-install-btn { padding: 0 11px; }
+            .home-search-wrap { padding-left: 6px; padding-right: 6px; gap:6px; }
+            .home-install-btn { padding: 0 9px; }
+            .dns-shortcut-btn { padding:0 10px; font-size:11px; }
         }
 
     </style>
@@ -1269,6 +1280,7 @@
                 <input id="homeSearch" type="search" placeholder="Search channels..." autocomplete="off" spellcheck="false" aria-label="Search channels on home screen">
                 <span id="homeSearchCount" class="home-search-count"></span>
             </label>
+            <button id="dnsShortcutBtn" class="dns-shortcut-btn" type="button" aria-haspopup="dialog" aria-controls="dnsHelpModal">⚙ DNS</button>
             <button id="installAppBtn" class="home-install-btn" type="button">📲 Install</button>
         </div>
         <div class="cats w-full" id="categoryContainer" role="tablist"></div>
@@ -1277,6 +1289,16 @@
     <div class="grid" id="channelGrid">
         <div class="msg">Loading Channels...</div>
     </div>
+</div>
+
+<div id="dnsHelpModal" class="dns-help-backdrop" role="dialog" aria-modal="true" aria-labelledby="dnsHelpTitle">
+  <div class="dns-help-dialog">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><h2 id="dnsHelpTitle" class="dns-help-title">⚙ Private DNS</h2><button id="dnsHelpClose" class="dns-help-close" type="button" aria-label="Close">×</button></div>
+    <p class="dns-help-copy">Try opening Android's Private DNS settings. This shortcut does not link to the Play Store. If your browser or Samsung blocks the request, Android will stay on this page.</p>
+    <button id="dnsOpenSettingsBtn" class="dns-open-btn" type="button">Open Private DNS settings</button>
+    <div class="dns-help-path"><strong>Samsung phones</strong><br>Settings → Connections → More connection settings → Private DNS</div>
+    <p class="dns-help-note">Websites cannot force Android to open system settings. There is no supported universal web link to that exact settings page; if the shortcut is blocked, use the path above.</p>
+  </div>
 </div>
 
 <div id="playerContainer" class="fixed inset-0 z-[100] hidden flex-col h-[100vh] min-h-[100dvh]">
@@ -2568,6 +2590,31 @@ const ua = navigator.userAgent;
             }
         }
     }, true); 
+
+    // Private DNS shortcut: no Play Store or market:// fallback is used.
+    (function setupDnsShortcut() {
+        const open = document.getElementById('dnsShortcutBtn');
+        const modal = document.getElementById('dnsHelpModal');
+        const close = document.getElementById('dnsHelpClose');
+        const tryOpen = document.getElementById('dnsOpenSettingsBtn');
+        if (!open || !modal || !close || !tryOpen) return;
+
+        const closeModal = () => modal.classList.remove('open');
+        open.addEventListener('click', () => modal.classList.add('open'));
+        close.addEventListener('click', closeModal);
+        modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
+        document.addEventListener('keydown', event => { if (event.key === 'Escape') closeModal(); });
+
+        tryOpen.addEventListener('click', () => {
+            if (!/Android/i.test(navigator.userAgent)) {
+                tryOpen.textContent = 'Android phone required';
+                return;
+            }
+            // Intent is attempted once; never redirect to Play Store.
+            window.location.href = 'intent:#Intent;action=android.settings.PRIVATE_DNS_SETTINGS;end';
+            tryOpen.textContent = 'If blocked, use the Samsung steps below';
+        });
+    })();
 
     // PWA: make the site installable as a standalone app.
     let deferredInstallPrompt = null;
