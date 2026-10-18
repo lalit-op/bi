@@ -2610,9 +2610,11 @@ const ua = navigator.userAgent;
                 tryOpen.textContent = 'Android phone required';
                 return;
             }
-            // Intent is attempted once; never redirect to Play Store.
-            window.location.href = 'intent:#Intent;action=android.settings.PRIVATE_DNS_SETTINGS;end';
-            tryOpen.textContent = 'If blocked, use the Samsung steps below';
+            // Explicitly target the Android Settings package; do not provide a browser/Play Store fallback.
+            // Some Samsung builds do not expose this action to browsers, so keep the help panel available.
+            const dnsIntent = 'intent:#Intent;action=android.settings.PRIVATE_DNS_SETTINGS;package=com.android.settings;end';
+            window.location.href = dnsIntent;
+            tryOpen.textContent = 'Opening Settings…';
         });
     })();
 
