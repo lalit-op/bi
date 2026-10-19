@@ -1,0 +1,13 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.feather.dnshelper'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.feather.dnshelper'
+        minSdk 26
+        targetSdk 28
+        versionCode 1
+        versionName '1.0'
+    }
+}
