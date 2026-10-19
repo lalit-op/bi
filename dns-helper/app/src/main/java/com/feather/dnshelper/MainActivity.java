@@ -40,6 +40,30 @@ public class MainActivity extends Activity {
     }
 
     private void openDns() {
+        // Samsung One UI's More connection settings page.
+        try {
+            Intent intent = new Intent();
+            intent.setComponent(new ComponentName(
+                "com.android.settings",
+                "com.samsung.android.settings.connection.MoreConnectionSettings"
+            ));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            return;
+        } catch (Exception ignored) { }
+
+        // Try Samsung's alternative package/component naming.
+        try {
+            Intent intent = new Intent();
+            intent.setComponent(new ComponentName(
+                "com.samsung.android.settings",
+                "com.samsung.android.settings.connection.MoreConnectionSettings"
+            ));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            return;
+        } catch (Exception ignored) { }
+
         // The AOSP Settings manifest uses this exact action string.
         try {
             Intent intent = new Intent("com.android.settings.PRIVATE_DNS_SETTINGS");
