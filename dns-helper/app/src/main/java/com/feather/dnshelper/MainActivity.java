@@ -25,7 +25,7 @@ public class MainActivity extends Activity {
         title.setGravity(Gravity.CENTER);
         layout.addView(title);
         TextView note = new TextView(this);
-        note.setText("Opens More connection settings, where you can tap Private DNS.");
+        note.setText("Tap below to open Private DNS. If your phone blocks the direct screen, use Connections → More connection settings → Private DNS.");
         note.setTextSize(16);
         note.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(-1, -2);
@@ -40,33 +40,42 @@ public class MainActivity extends Activity {
     }
 
     private void openDns() {
-        // Samsung One UI: open the More connection settings page shown in the user's screenshot.
-        String[] classes = {
-            "com.samsung.android.settings.connection.MoreConnectionSettings",
-            "com.android.settings.Settings$MoreConnectionSettingsActivity",
-            "com.android.settings.Settings$NetworkDashboardActivity"
-        };
-        for (String className : classes) {
-            try {
-                Intent intent = new Intent();
-                intent.setComponent(new ComponentName("com.android.settings", className));
-                startActivity(intent);
-                return;
-            } catch (Exception ignored) { }
-        }
-
-        // Fallback to Connections so the user can continue manually.
+        // The AOSP Settings manifest uses this exact action string.
         try {
-            Intent intent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
+            Intent intent = new Intent("com.android.settings.PRIVATE_DNS_SETTINGS");
+            intent.setPackage("com.android.settings");
             startActivity(intent);
-            Toast.makeText(this, "Tap Connections → More connection settings → Private DNS.", Toast.LENGTH_LONG).show();
+            return;
+        } catch (Exception ignored) { }
+
+        // Try the corresponding AOSP component name.
+        try {
+            Intent intent = new Intent();
+            intent.setComponent(new ComponentName(
+                "com.android.settings",
+                "com.android.settings.Settings$PrivateDnsSettingsActivity"
+            ));
+            startActivity(intent);
+            return;
+        } catch (Exception ignored) { }
+
+        // Samsung may not expose the Private DNS activity to third-party apps.
+        try {
+            Intent intent = new Intent();
+            intent.setComponent(new ComponentName(
+                "com.android.settings",
+                "com.android.settings.Settings$MoreConnectionSettingsActivity"
+            ));
+            startActivity(intent);
+            return;
+        } catch (Exception ignored) { }
+
+        try {
+            startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
+            Toast.makeText(this, "Tap More connection settings → Private DNS.", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            try {
-                startActivity(new Intent(Settings.ACTION_SETTINGS));
-                Toast.makeText(this, "Tap Connections → More connection settings → Private DNS.", Toast.LENGTH_LONG).show();
-            } catch (Exception ignored) {
-                Toast.makeText(this, "Open Settings → Connections → More connection settings → Private DNS.", Toast.LENGTH_LONG).show();
-            }
+            startActivity(new Intent(Settings.ACTION_SETTINGS));
+            Toast.makeText(this, "Tap Connections → More connection settings → Private DNS.", Toast.LENGTH_LONG).show();
         }
     }
 }
