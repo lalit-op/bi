@@ -2,6 +2,7 @@ package com.feather.dnshelper;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.provider.Settings;
 import android.view.Gravity;
@@ -24,7 +25,7 @@ public class MainActivity extends Activity {
         title.setGravity(Gravity.CENTER);
         layout.addView(title);
         TextView note = new TextView(this);
-        note.setText("Tap below to open Private DNS settings. If your phone does not support the direct screen, general Settings will open.");
+        note.setText("Tap below to open Private DNS settings. Some Samsung software versions do not allow apps to open this screen directly.");
         note.setTextSize(16);
         note.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams np = new LinearLayout.LayoutParams(-1, -2);
@@ -37,15 +38,33 @@ public class MainActivity extends Activity {
         setContentView(layout);
         if (getIntent() != null && "featherdns".equals(getIntent().getScheme())) openDns();
     }
+
     private void openDns() {
+        // Try the Android Settings activity directly first.
         try {
-            // AOSP Settings registers this action under com.android.settings, not android.settings.
-            Intent intent = new Intent("com.android.settings.PRIVATE_DNS_SETTINGS");
-            intent.setPackage("com.android.settings");
-            startActivity(intent);
+            Intent direct = new Intent();
+            direct.setComponent(new ComponentName(
+                "com.android.settings",
+                "com.android.settings.Settings$PrivateDnsSettingsActivity"
+            ));
+            startActivity(direct);
+            return;
+        } catch (Exception ignored) { }
+
+        // Try the documented-style action, scoped to Samsung/AOSP Settings.
+        try {
+            Intent action = new Intent("android.settings.PRIVATE_DNS_SETTINGS");
+            action.setPackage("com.android.settings");
+            startActivity(action);
+            return;
+        } catch (Exception ignored) { }
+
+        // Last-resort navigation. Android may block direct access on some firmware.
+        try {
+            startActivity(new Intent(Settings.ACTION_SETTINGS));
+            Toast.makeText(this, "Open Connections → More connection settings → Private DNS.", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            try { startActivity(new Intent(Settings.ACTION_SETTINGS)); }
-            catch (Exception ignored) { Toast.makeText(this, "Please open Settings manually and search for Private DNS.", Toast.LENGTH_LONG).show(); }
+            Toast.makeText(this, "Open Settings and search for Private DNS.", Toast.LENGTH_LONG).show();
         }
     }
 }
