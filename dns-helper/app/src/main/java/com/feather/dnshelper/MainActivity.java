@@ -39,8 +39,9 @@ public class MainActivity extends Activity {
     }
     private void openDns() {
         try {
-            Intent intent = new Intent("android.settings.PRIVATE_DNS_SETTINGS");
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            // AOSP Settings registers this action under com.android.settings, not android.settings.
+            Intent intent = new Intent("com.android.settings.PRIVATE_DNS_SETTINGS");
+            intent.setPackage("com.android.settings");
             startActivity(intent);
         } catch (Exception e) {
             try { startActivity(new Intent(Settings.ACTION_SETTINGS)); }
